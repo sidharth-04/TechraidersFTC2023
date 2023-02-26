@@ -43,12 +43,10 @@ public class DriveTrainSimplified extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Drivercentric Variables
-        double gamepadX;
-        double gamepadY;
-        double gamepadT;
+        double x;
+        double y;
+        double rx;
         double robotAngle;
-        double xRotated;
-        double yRotated;
         
         // Drivetrain Motors
         frontLeft = hardwareMap.get(DcMotorEx.class, "B0");
@@ -63,11 +61,6 @@ public class DriveTrainSimplified extends LinearOpMode {
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        // frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         
         // Drivercentric Initialization
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -93,22 +86,30 @@ public class DriveTrainSimplified extends LinearOpMode {
             // DRIVETRAIN
             // ----------------------------------
             // Get the coordinates of the joystick in a x-y axis
-            gamepadX = gamepad1.left_stick_x;
-            gamepadY = -gamepad1.left_stick_y;
-            gamepadT = (Math.atan2(gamepadYCoordinate, gamepadXCoordinate)/Math.PI)*180;
+            x = gamepad1.left_stick_x;
+            y = -gamepad1.left_stick_y;
+            rx = gamepad2.right_stick_x;
            
             // Angle from the imu (internal angle of the robot)
             robotAngle = getAngle();
         
             // Calculate the rotated x and y
-            double x_rotated = x * Math.cos(robotAngle) - y * Math.sin(robotAngle);
-            double y_rotated = x * Math.sin(robotAngle) + y * Math.cos(robotAngle);
-            
-            // Turn the robot to the  right and to the left based on newly computed x and y controls
-            frontRight.setPower(x_rotated - y_rotated - gamepadT);
-            backRight.setPower(x_rotated + y_rotated - gamepadT);
-            frontLeft.setPower(x_rotated + y_rotated + gamepadT);
-            backLeft.setPower(x_rotated - y_rotated + gamepadT);
+            double rotX = x * Math.cos(-robotAngle) - y * Math.sin(-robotAngle);
+            double rotY = x * Math.sin(-robotAngle) + y * Math.cos(-robotAngle);
+
+            // Denominator is the largest motor power (absolute value) or 1
+            // This ensures all the powers maintain the same ratio, but only when
+            // at least one is out of the range [-1, 1]
+            double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+            double frontLeftPower = (rotY + rotX + rx) / denominator;
+            double backLeftPower = (rotY - rotX + rx) / denominator;
+            double frontRightPower = (rotY - rotX - rx) / denominator;
+            double backRightPower = (rotY + rotX - rx) / denominator;
+
+            frontLeft.setPower(frontLeftPower);
+            backLeft.setPower(backLeftPower);
+            frontRight.setPower(frontRightPower);
+            backRight.setPower(backRightPower);
             telemetry.addData("current backleft", backLeft.getPower());
             telemetry.addData("current frontleft", frontLeft.getPower());
             telemetry.addData("current backright", backRight.getPower());
@@ -129,6 +130,6 @@ public class DriveTrainSimplified extends LinearOpMode {
     }
 
     public double getAngle() {
-        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+        return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle * Math.PI / 180;
     }
 }
