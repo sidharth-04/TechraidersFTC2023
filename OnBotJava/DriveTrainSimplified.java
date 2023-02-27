@@ -101,10 +101,10 @@ public class DriveTrainSimplified extends LinearOpMode {
             // This ensures all the powers maintain the same ratio, but only when
             // at least one is out of the range [-1, 1]
             double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-            double frontLeftPower = (rotY + rotX + rx) / denominator;
-            double backLeftPower = (rotY - rotX + rx) / denominator;
-            double frontRightPower = (rotY - rotX - rx) / denominator;
-            double backRightPower = (rotY + rotX - rx) / denominator;
+            double frontLeftPower = (rotY*Math.abs(rotY) + rotX*Math.abs(rotX) + rx);
+            double backLeftPower = (rotY*Math.abs(rotY) - rotX*Math.abs(rotX) + rx);
+            double frontRightPower = (rotY*Math.abs(rotY)  - rotX*Math.abs(rotX) - rx);
+            double backRightPower = (rotY*Math.abs(rotY)  + rotX*Math.abs(rotX) - rx);
 
             frontLeft.setPower(frontLeftPower);
             backLeft.setPower(backLeftPower);
