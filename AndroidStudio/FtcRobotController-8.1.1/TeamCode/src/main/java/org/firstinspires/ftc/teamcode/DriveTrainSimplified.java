@@ -75,7 +75,7 @@ public class DriveTrainSimplified extends LinearOpMode {
             // Get the coordinates of the joystick in a x-y axis
             x = gamepad1.left_stick_x;
             y = -gamepad1.left_stick_y;
-            rx = gamepad2.right_stick_x;
+            rx = gamepad1.right_stick_x;
 
             // Angle from the imu (internal angle of the robot)
             robotAngle = getAngle();
