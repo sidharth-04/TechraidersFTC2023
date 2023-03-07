@@ -100,7 +100,7 @@ public class JavaExa extends LinearOpMode
 
                 for(AprilTagDetection tag : currentDetections)
                 {
-                    if(tagOfInterest.id == Left || tagOfInterest.id == Middle || tagOfInterest.id == Right)
+                    if(tag.id == Left || tag.id == Middle || tag.id == Right)
                     {
                         tagOfInterest = tag;
                         tagFound = true;
