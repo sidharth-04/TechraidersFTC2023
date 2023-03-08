@@ -36,7 +36,7 @@ public class DriveConstants {
      */
     public static final boolean RUN_USING_ENCODER = true;
 //    Tune PIDCoefficients
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(10, 0, 5,  12.657957890824237);
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(10, 0, 5,  13.17);
 
     /*
      * These are physical constants that can be determined from your robot (including the track
@@ -49,8 +49,8 @@ public class DriveConstants {
 
 //    Check Radius and Track Width
     public static double WHEEL_RADIUS = 2; // in
-    public static double GEAR_RATIO = 1.3333333333333333 * 58.82/58.84; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 8.6; // in
+    public static double GEAR_RATIO = 1.3333333333333333 * 0.98; // output (wheel) speed / input (motor) speed
+    public static double TRACK_WIDTH = 11.55; // in
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -91,9 +91,9 @@ public class DriveConstants {
 
      */
 //    Calculate again after running with battery
-    public static double MAX_VEL = 30.88;
+    public static double MAX_VEL = 30.70;
     public static double MAX_ACCEL = 39.16518841475275;
-    public static double MAX_ANG_VEL = Math.toRadians(255.5808656036446);
+    public static double MAX_ANG_VEL = Math.toRadians(143.95);
     public static double MAX_ANG_ACCEL = Math.toRadians(255.5808656036446);
 
 
