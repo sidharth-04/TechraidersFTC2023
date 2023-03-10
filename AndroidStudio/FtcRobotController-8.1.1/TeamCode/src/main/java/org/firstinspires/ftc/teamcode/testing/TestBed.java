@@ -9,11 +9,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.components.MecanumDriveT;
 
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ArmFeedforward;
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Config
 @TeleOp
@@ -23,7 +23,6 @@ public class TestBed extends LinearOpMode {
     private DcMotorEx grabberRotator;
     private DcMotor grabberLift;
     private CRServo grabberClawServo;
-
     private DcMotor catcherLift;
     private CRServo rotateLiftServo;
     private CRServo flipConeServo;
@@ -31,14 +30,17 @@ public class TestBed extends LinearOpMode {
     // Variables to tune
     private ArmFeedforward feedforward;
     private PIDController controller;
-    public static double kS = 0, kCos = 0, kV = 0, kA = 0;
-    public static double feedforwardTarget = 0;
-    public static double feedforwardVel = 0;
+    public static double kS = 0, kCos = 0.1, kV = 0.1, kA = 0;
+    public static double feedforwardTarget = 0.0;
+    public static double feedforwardVel = 0.8;
     public static double feedforwardAcc = 0;
     private static double p = 0.008, i = 0, d = 0.0002, f = 0.1;
-    public static double pidTarget = 200;
     public static double ticks_in_degrees = (28 * 45.0/125.0) / 360.0;
     private int grabberState = 0;
+    private int direction = 0;
+    private int downCheckPoint = 350;
+    private int upCheckPoint = 250;
+    private ElapsedTime bufferTimer = null;
 
     @Override
     public void runOpMode() {
@@ -83,22 +85,48 @@ public class TestBed extends LinearOpMode {
             // ----------------------------------
             // Code for rotating the grabber
             if(gamepad1.a) {
+                // Coming down
                 grabberState = 1;
+                direction = 1;
+                kV = 0.6;
+            }
+            if(gamepad1.y) {
+                // Coming up
+                grabberState = 1;
+                direction = -1;
+                kV = -0.6;
             }
 
             //Feedforward
             if (grabberState == 1) {
+                bufferTimer = null;
                 feedforward = new ArmFeedforward(kS, kCos, kV, kA);
                 grabberRotator.setPower(feedforward.calculate(Math.toRadians(feedforwardTarget), feedforwardVel, feedforwardAcc));
-                if (grabberRotator.getCurrentPosition() <= 250) {
+                if (direction == 1 && grabberRotator.getCurrentPosition() >= downCheckPoint) {
+                    grabberState = 2;
+                } else if (direction == -1 && grabberRotator.getCurrentPosition() <= upCheckPoint) {
                     grabberState = 2;
                 }
             }
 
             // PID
             if (grabberState == 2) {
-                controller.setPID(p, i, d);
                 int armPos = grabberRotator.getCurrentPosition();
+                int pidTarget = 300;
+                if (direction == 1) {
+                    if (bufferTimer == null) {
+                        pidTarget = 400;
+                        if (armPos - pidTarget <= 25) {
+                            bufferTimer = new ElapsedTime();
+                        }
+                    } else {
+                        if (bufferTimer.seconds() > 1.2) {
+                            pidTarget = 580;
+                        }
+                    }
+                } else {
+                    pidTarget = 90;
+                }
                 double pid = controller.calculate(armPos, pidTarget);
                 double ff = Math.cos(Math.toRadians(pidTarget / ticks_in_degrees)) * f;
                 double power = pid + ff;
@@ -128,7 +156,7 @@ public class TestBed extends LinearOpMode {
 //            }
 
             if (gamepad1.right_trigger > 0) {
-                if (grabberLift.getCurrentPosition() <= 2000) {
+                if (grabberLift.getCurrentPosition() <= 3000) {
                     grabberLift.setPower(0.6);
                     telemetry.addData("WARNING WARNING",grabberLift.getCurrentPosition() );
                     telemetry.update();
@@ -178,7 +206,7 @@ public class TestBed extends LinearOpMode {
 //            }
 
             if (gamepad2.right_trigger > 0) {
-                if (catcherLift.getCurrentPosition() <= 3000) {
+                if (catcherLift.getCurrentPosition() <= 4450) {
                     catcherLift.setPower(0.6);
                     telemetry.addData("WARNING WARNING",catcherLift.getCurrentPosition() );
                     telemetry.update();
