@@ -22,7 +22,7 @@ public class AutoDrivetrainTest extends LinearOpMode {
         waitForStart();
         if (isStopRequested()) return;
         Trajectory traj = ADrive.trajectoryBuilder(new Pose2d())
-                .lineToSplineHeading(new Pose2d(TILE_LENGTH*2,0,Math.toRadians(90)))
+                .lineToSplineHeading(new Pose2d(TILE_LENGTH*2,0,Math.toRadians(-90)))
 //                .lineToSplineHeading(new Pose2d(TILE_LENGTH*2,0,Math.toRadians(90)))
                 .build();
 

@@ -23,10 +23,9 @@ public class Grabber {
 
     // States and Finite State Machine (FSM)
     private enum FSM {
-        RESETTING,
         FREE_CONTROL,
         FLIP_CONE,
-        GOD_MODE
+        RESETTING
     }
     private FSM FSMState;
 
@@ -61,8 +60,6 @@ public class Grabber {
                 return "free_contro";
             case FLIP_CONE:
                 return "flip_cone";
-            case GOD_MODE:
-                return "god_mode";
         }
         return "not found";
     }
@@ -72,9 +69,9 @@ public class Grabber {
         this.setState(FSM.FLIP_CONE);
     }
 
-    public void initiateGodModeSignal() {
-        this.setState(FSM.GOD_MODE);
-    }
+//    public void initiateGodModeSignal() {
+//        this.setState(FSM.GOD_MODE);
+//    }
 
     public void switchToFreeSignal() {
         this.setState(FSM.FREE_CONTROL);
@@ -101,17 +98,21 @@ public class Grabber {
         return;
     }
 
+    private void flipCone() {
+
+    }
+    private void reset() {
+
+    }
+
     public void update() {
         switch (this.FSMState) {
-            case RESETTING:
-                // When done, swtich back to free control
-                return;
             case FREE_CONTROL:
                 return;
+            case RESETTING:
+                reset();
             case FLIP_CONE:
-                return;
-            case GOD_MODE:
-                return;
+                flipCone();
         }
     }
 }
