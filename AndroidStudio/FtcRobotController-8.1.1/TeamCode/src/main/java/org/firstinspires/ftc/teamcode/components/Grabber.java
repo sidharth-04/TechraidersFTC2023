@@ -1,13 +1,14 @@
 package org.firstinspires.ftc.teamcode.components;
 
+import com.arcrobotics.ftclib.controller.wpilibcontroller.ArmFeedforward;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 
@@ -15,104 +16,167 @@ public class Grabber {
     // Actuators
     private DcMotorEx grabberRotator;
     private DcMotorEx grabberLift;
-    private CRServo claw;
+    private Servo claw;
 
-    private PIDController rotatorController;
-    public static double rp = 0.0, ri = 0.0, rd = 0.0, rf = 0.0;
-    public static int target = 0;
+    // Feedforward
+    private static double kS = 0, kCos = 0.1, kV = 0.6, kA = 0;
+    private ArmFeedforward feedforward = new ArmFeedforward(kS, kCos, kV, kA);
+    private static double feedforwardTarget = 0.0;
+    private static double feedforwardVel = 0.8;
+    private static double feedforwardAcc = 0;
 
-    // States and Finite State Machine (FSM)
-    private enum FSM {
-        FREE_CONTROL,
-        FLIP_CONE,
-        RESETTING
-    }
-    private FSM FSMState;
+    // PID
+    private static double p = 0.008, i = 0, d = 0.0002, f = 0.1;
+    private PIDController controller = new PIDController(p, i, d);
+    private static double ticks_in_degrees = (28 * 45.0/125.0) / 360.0;
+    private static int holdValue = 0;
 
-    // Endpoints (EP) for grabberRotator
-    private double rotatorEndpoints[] = new double[6];
-    private double rotEPT = rotatorEndpoints[0];
-    private double rotEPB = rotatorEndpoints[5];
+    // Control Switching
+    private int grabberState = 0;
+    private int direction = 0;
+    private int downCheckPoint = 450;
+    private int upCheckPoint = 250;
 
-    // Endpoints (EP) for grabberLift
-    private double liftEPMin;
-    private double liftEPMax;
+    // AutoContract Feature
+    private int autoContractState = 0;
+    private ElapsedTime stateTimer = null;
 
-    private final double ticks_in_degrees = 700 / 180.0;
-
-    public Grabber(HardwareMap hardwareMap, String opmode) {
+    public Grabber(HardwareMap hardwareMap) {
         this.grabberRotator = hardwareMap.get(DcMotorEx.class, "grabberRotatorMotor");
         this.grabberLift = hardwareMap.get(DcMotorEx.class, "grabberLiftMotor");
-        this.claw = hardwareMap.get(CRServo.class, "clawServo");
+        this.claw = hardwareMap.get(Servo.class, "grabberClawServo");
 
-        this.setState(FSM.FREE_CONTROL);
+        this.claw.setPosition(0.7);
     }
 
-    private void setState(FSM state) {
-        this.FSMState = state;
+    public void autoContract() {
+//        if (grabberState == 1) {
+//            return;
+//        }
+//        if (grabberRotator.getCurrentPosition() < upCheckPoint) {
+//            return;
+//        }
+        autoContractState = 1;
+        moveUp(70);
     }
-
-    public String getState() {
-        switch (this.FSMState) {
-            case RESETTING:
-                return "resetting";
-            case FREE_CONTROL:
-                return "free_contro";
-            case FLIP_CONE:
-                return "flip_cone";
+    public boolean notInAuto() {
+        if (autoContractState == 0) {
+            return true;
         }
-        return "not found";
+        return false;
     }
 
-    // Signals that can be sent to the system
-    public void flipConeSignal() {
-        this.setState(FSM.FLIP_CONE);
+    public void moveDown(int setpoint) {
+//        if (grabberState == 1) {
+//            return;
+//        }
+//        // Failsafe if already down
+//        if (grabberRotator.getCurrentPosition() > downCheckPoint) {
+//            return;
+//        }
+        grabberState = 1;
+        direction = 1;
+        kV = 0.6;
+        kA = 0.0;
+        feedforwardVel = 0.8;
+        feedforwardAcc = 0;
+        feedforward = new ArmFeedforward(kS, kCos, kV, kA);
+        holdValue = setpoint;
     }
 
-//    public void initiateGodModeSignal() {
-//        this.setState(FSM.GOD_MODE);
-//    }
-
-    public void switchToFreeSignal() {
-        this.setState(FSM.FREE_CONTROL);
+    public void moveUp(int setpoint) {
+//        if (grabberState == 1) {
+//            return;
+//        }
+//        // Failsafe if already up
+//        if (grabberRotator.getCurrentPosition() < upCheckPoint) {
+//            return;
+//        }
+        grabberState = 1;
+        direction = -1;
+        kV = -0.6;
+        kA = 0.0;
+        feedforwardVel = 0.8;
+        feedforwardAcc = 0;
+        feedforward = new ArmFeedforward(kS, kCos, kV, kA);
+        holdValue = setpoint;
     }
 
-    public void resetGrabberSignal() {
-        this.setState((FSM.RESETTING));
+    public int getPos() {
+        return grabberLift.getCurrentPosition();
     }
 
-    // Functions
-    public void activateClaw(int pos) {
-        return;
+    public void openClaw() {
+        claw.setPosition(0.7);
+    }
+    public void closeClaw() {
+        claw.setPosition(0.4);
     }
 
-    public void rotateGrabberToEP(int ep) {
-        return;
+    public void extendLift() {
+        if (grabberLift.getCurrentPosition() <= 1830) {
+            grabberLift.setPower(1);
+        } else {
+            grabberLift.setPower(0);
+        }
     }
-
-    public void slideLift(double power) {
-        return;
+    public void contractLift() {
+        if (grabberLift.getCurrentPosition() > 0) {
+            grabberLift.setPower(-1);
+        } else {
+            grabberLift.setPower(0);
+        }
     }
-
-    public void setLiftToEP(int ep) {
-        return;
-    }
-
-    private void flipCone() {
-
-    }
-    private void reset() {
-
+    public void stationLift() {
+        grabberLift.setPower(0);
     }
 
     public void update() {
-        switch (this.FSMState) {
-            case FREE_CONTROL:
-                return;
-            case RESETTING:
-                reset();
-            case FLIP_CONE:
-                flipCone();
+        if (grabberState == 1) {
+            grabberRotator.setPower(feedforward.calculate(Math.toRadians(feedforwardTarget), feedforwardVel, feedforwardAcc));
+            if (direction == 1 && grabberRotator.getCurrentPosition() >= downCheckPoint) {
+                kV = -0.6;
+                kA = 0;
+                feedforwardVel = 0.4;
+                feedforwardAcc = 0.06;
+                feedforward = new ArmFeedforward(kS, kCos, kV, kA);
+                if (grabberRotator.getCurrentPosition() >= 500) {
+                    grabberState = 2;
+                }
+            } else if (direction == -1 && grabberRotator.getCurrentPosition() <= upCheckPoint) {
+                grabberState = 2;
+            }
+        }
+
+        if (grabberState == 2) {
+            int armPos = grabberRotator.getCurrentPosition();
+            int pidTarget = holdValue;
+            double pid = controller.calculate(armPos, pidTarget);
+            double ff = Math.cos(Math.toRadians(pidTarget / ticks_in_degrees)) * f;
+            double power = pid + ff;
+            grabberRotator.setPower(power);
+        }
+
+        if (autoContractState == 1) {
+            if (Math.abs(grabberRotator.getCurrentPosition() - 70) <= 10) {
+                stateTimer = new ElapsedTime();
+                autoContractState += 1;
+            }
+        }
+        else if (autoContractState == 2) {
+            if (stateTimer.seconds() > 1) {
+                openClaw();
+                stateTimer = new ElapsedTime();
+                autoContractState += 1;
+            }
+        } else if (autoContractState == 3) {
+            if (stateTimer.seconds() > 1) {
+                moveDown(580);
+                stateTimer = null;
+                autoContractState += 1;
+            }
+        } else if (Math.abs(grabberRotator.getCurrentPosition() - 580) <= 10) {
+            autoContractState = 0;
         }
     }
 }

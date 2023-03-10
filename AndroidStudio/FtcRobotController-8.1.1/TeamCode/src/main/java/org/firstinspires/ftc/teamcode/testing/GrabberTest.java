@@ -16,7 +16,7 @@ public class GrabberTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        grabber = new Grabber(hardwareMap, "teleop");
+        grabber = new Grabber(hardwareMap);
         double x;
         double y;
         double rx;
