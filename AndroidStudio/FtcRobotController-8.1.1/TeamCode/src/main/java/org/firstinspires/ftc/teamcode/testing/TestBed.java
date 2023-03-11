@@ -1,64 +1,41 @@
 package org.firstinspires.ftc.teamcode.testing;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.arcrobotics.ftclib.controller.wpilibcontroller.ArmFeedforward;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.checkerframework.checker.units.qual.C;
 import org.firstinspires.ftc.teamcode.components.MecanumDriveT;
 import org.firstinspires.ftc.teamcode.components.Grabber;
+import org.firstinspires.ftc.teamcode.components.Catcher;
 
-import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Config
 @TeleOp
 public class TestBed extends LinearOpMode {
     private MecanumDriveT TDrive;
     private Grabber grabber;
-
-    private DcMotorEx grabberRotator;
-    private DcMotor grabberLift;
-    private Servo grabberClawServo;
-
-    private DcMotor catcherLift;
-    private Servo rotateLiftServo;
-    private Servo flipConeServo;
-
-    public static double rotationServoPos = 0.5;
-    public static double flipConeServPos = 1;
+    private Catcher catcher;
 
     @Override
     public void runOpMode() {
         // Drivetrain Variables
         TDrive = new MecanumDriveT(hardwareMap);
         grabber = new Grabber(hardwareMap);
+        catcher = new Catcher(hardwareMap);
         double x;
         double y;
         double rx;
 
-        // HD Hex Motors
-        grabberRotator = hardwareMap.get(DcMotorEx.class, "grabberRotatorMotor");
-        grabberLift = hardwareMap.get(DcMotor.class, "grabberLiftMotor");
-        catcherLift = hardwareMap.get(DcMotor.class, "catcherLiftMotor");
-
-        // Servo Motors
-        grabberClawServo = hardwareMap.get(Servo.class, "grabberClawServo");
-        flipConeServo = hardwareMap.get(Servo.class, "flipConeServo");
-        rotateLiftServo = hardwareMap.get(Servo.class, "rotateLiftServo");
-
         // Tuning Variables
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-
         // Wait for player to press start
         waitForStart();
 
-        grabberClawServo.setPosition(0.7);
-        flipConeServo.setPosition(flipConeServPos);
-        rotateLiftServo.setPosition(rotationServoPos);
+        grabber.init();
+        catcher.init();
 
         while (opModeIsActive()) {
             // ----------------------------------
@@ -78,7 +55,7 @@ public class TestBed extends LinearOpMode {
                     grabber.moveDown(580);
                 }
                 if (gamepad1.y) {
-                    grabber.moveUp(90);
+                    grabber.moveUp(80);
                 }
                 if (gamepad1.start) {
                     grabber.autoContract();
@@ -94,76 +71,51 @@ public class TestBed extends LinearOpMode {
                 // Code for controlling the grabber lift
                 if (gamepad1.right_trigger > 0) {
                     grabber.extendLift();
+                    telemetry.addData("grabberLift", grabber.getPos());
+                    telemetry.update();
                 }
                 else if (gamepad1.left_trigger > 0) {
                     grabber.contractLift();
+                    telemetry.addData("grabberLift", grabber.getPos());
+                    telemetry.update();
                 } else {
                     grabber.stationLift();
                 }
             }
             grabber.update();
-            telemetry.addData("graber pos", grabber.getPos());
-            telemetry.update();
 
             // ----------------------------------
             // CATCHER
             // ----------------------------------
             // Code for rotating the catcher
-            if (gamepad2.dpad_right) {
-                rotationServoPos += 0.01;
-                if (rotationServoPos >= 1) {
-                    rotationServoPos = 1;
-                }
-            } else if (gamepad2.dpad_left) {
-                rotationServoPos -= 0.01;
-                if (rotationServoPos <= 0) {
-                    rotationServoPos = 0;
-                }
+            if (gamepad2.right_stick_x > 0.0) {
+                catcher.increaseRotation();
+            } else if (gamepad2.right_stick_x < 0.0) {
+                catcher.decreaseRotation();
             }
             if (gamepad2.a) {
-                rotationServoPos = 0.4;
+                catcher.setEasyCatch();
             }
-            rotateLiftServo.setPosition(rotationServoPos);
+            if (gamepad2.b) {
+                catcher.setTeleDrop();
+
+            }
 
             // Code for flipping the cone
             if (gamepad2.right_bumper) {
-                flipConeServPos = 0;
-            } else if (gamepad2.left_bumper || flipConeServo.getPosition() == 0) {
-                flipConeServPos = 0.9;
+                catcher.dumpCone();
+            } else if (gamepad2.left_bumper || catcher.getFlipPos() == 0) {
+                catcher.resetCatcher();
             }
-            flipConeServo.setPosition(flipConeServPos);
 
-//            if (gamepad2.right_trigger > 0) {
-//                catcherLift.setPower(0.6);
-//            } else if (gamepad2.left_trigger > 0) {
-//                catcherLift.setPower(-0.6);
-//            } else {
-//                catcherLift.setPower(0);
-//            }
-
+            // Extend contract lift
             if (gamepad2.right_trigger > 0) {
-                if (catcherLift.getCurrentPosition() <= 4950) {
-                    catcherLift.setPower(0.8);
-                    telemetry.addData("WARNING WARNING",catcherLift.getCurrentPosition() );
-                    telemetry.update();
-                } else {
-                    catcherLift.setPower(0);
-                    telemetry.addData("WARNING WARNING", "You've reached Max!!!!" );
-                    telemetry.update();
-                }
+                catcher.extendLift();
             }
             else if (gamepad2.left_trigger > 0) {
-                if (catcherLift.getCurrentPosition() > 0) {
-                    catcherLift.setPower(-0.8);
-                    telemetry.addData("WARNING WARNING",catcherLift.getCurrentPosition());
-                    telemetry.update();
-                } else {
-                    catcherLift.setPower(0);
-                    telemetry.addData("WARNING WARNING", "You've reached Min!!!!" );
-                    telemetry.update();
-                }
+                catcher.contractLift();
             } else {
-                catcherLift.setPower(0);
+                catcher.stationLift();
             }
         }
     }

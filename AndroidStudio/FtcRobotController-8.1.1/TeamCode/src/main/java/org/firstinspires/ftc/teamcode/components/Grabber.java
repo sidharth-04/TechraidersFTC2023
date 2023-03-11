@@ -49,15 +49,19 @@ public class Grabber {
         this.claw.setPosition(0.7);
     }
 
+    public void init() {
+//        claw.setPosition(0.7);
+    }
+
     public void autoContract() {
-//        if (grabberState == 1) {
-//            return;
-//        }
-//        if (grabberRotator.getCurrentPosition() < upCheckPoint) {
-//            return;
-//        }
+        if (grabberState == 1) {
+            return;
+        }
+        if (grabberRotator.getCurrentPosition() < upCheckPoint) {
+            return;
+        }
         autoContractState = 1;
-        moveUp(70);
+        moveUp(80);
     }
     public boolean notInAuto() {
         if (autoContractState == 0) {
@@ -67,13 +71,13 @@ public class Grabber {
     }
 
     public void moveDown(int setpoint) {
-//        if (grabberState == 1) {
-//            return;
-//        }
-//        // Failsafe if already down
-//        if (grabberRotator.getCurrentPosition() > downCheckPoint) {
-//            return;
-//        }
+        if (grabberState == 1) {
+            return;
+        }
+        // Failsafe if already down
+        if (grabberRotator.getCurrentPosition() > downCheckPoint) {
+            return;
+        }
         grabberState = 1;
         direction = 1;
         kV = 0.6;
@@ -85,18 +89,21 @@ public class Grabber {
     }
 
     public void moveUp(int setpoint) {
-//        if (grabberState == 1) {
-//            return;
-//        }
-//        // Failsafe if already up
-//        if (grabberRotator.getCurrentPosition() < upCheckPoint) {
-//            return;
-//        }
+        if (grabberState == 1) {
+            return;
+        }
+        // Failsafe if already up
+        if (grabberRotator.getCurrentPosition() < upCheckPoint) {
+            return;
+        }
+        if (grabberLift.getCurrentPosition() > 600) {
+            return;
+        }
         grabberState = 1;
         direction = -1;
         kV = -0.6;
         kA = 0.0;
-        feedforwardVel = 0.8;
+        feedforwardVel = 1;
         feedforwardAcc = 0;
         feedforward = new ArmFeedforward(kS, kCos, kV, kA);
         holdValue = setpoint;
@@ -104,6 +111,15 @@ public class Grabber {
 
     public int getPos() {
         return grabberLift.getCurrentPosition();
+    }
+    public void setPower(double power) {
+        grabberRotator.setPower(power);
+    }
+    public boolean atSetpoint() {
+        if (Math.abs(grabberRotator.getCurrentPosition() - holdValue) < 10) {
+            return true;
+        }
+        return false;
     }
 
     public void openClaw() {
@@ -114,7 +130,7 @@ public class Grabber {
     }
 
     public void extendLift() {
-        if (grabberLift.getCurrentPosition() <= 1830) {
+        if (grabberLift.getCurrentPosition() <= 2050) {
             grabberLift.setPower(1);
         } else {
             grabberLift.setPower(0);
@@ -158,7 +174,7 @@ public class Grabber {
         }
 
         if (autoContractState == 1) {
-            if (Math.abs(grabberRotator.getCurrentPosition() - 70) <= 10) {
+            if (Math.abs(grabberRotator.getCurrentPosition() - 80) <= 10) {
                 stateTimer = new ElapsedTime();
                 autoContractState += 1;
             }

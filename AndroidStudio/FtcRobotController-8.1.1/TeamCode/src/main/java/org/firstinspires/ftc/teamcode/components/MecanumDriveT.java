@@ -6,16 +6,12 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.drive.DriveConstants;
 
 
 public class MecanumDriveT {
-    private boolean fieldCentric = true;
     private DcMotorEx frontLeft, backLeft, backRight, frontRight;
     private IMU imu;
 
@@ -41,10 +37,6 @@ public class MecanumDriveT {
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    public void setFieldCentric(boolean fieldCentric) {
-        this.fieldCentric = fieldCentric;
-    }
-
     public void update(double x, double y, double rx) {
         double robotAngle = this.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         double frontLeftPower;
@@ -52,21 +44,14 @@ public class MecanumDriveT {
         double frontRightPower;
         double backRightPower;
 
-        if (this.fieldCentric) {
-            // Calculate the rotated x and y
-            double rotX = x * Math.cos(-robotAngle) - y * Math.sin(-robotAngle);
-            double rotY = x * Math.sin(-robotAngle) + y * Math.cos(-robotAngle);
+        // Calculate the rotated x and y
+        double rotX = x * Math.cos(-robotAngle) - y * Math.sin(-robotAngle);
+        double rotY = x * Math.sin(-robotAngle) + y * Math.cos(-robotAngle);
 
-            frontLeftPower = (rotY*Math.abs(rotY) + rotX*Math.abs(rotX) + rx);
-            backLeftPower = (rotY*Math.abs(rotY) - rotX*Math.abs(rotX) + rx);
-            frontRightPower = (rotY*Math.abs(rotY)  - rotX*Math.abs(rotX) - rx);
-            backRightPower = (rotY*Math.abs(rotY)  + rotX*Math.abs(rotX) - rx);
-        } else {
-            frontLeftPower = (y*Math.abs(y) + x*Math.abs(x) + rx);
-            backLeftPower = (y*Math.abs(y) - x*Math.abs(x) + rx);
-            frontRightPower = (y*Math.abs(y)  - x*Math.abs(x) - rx);
-            backRightPower = (y*Math.abs(y)  + x*Math.abs(x) - rx);
-        }
+        frontLeftPower = (rotY*Math.abs(rotY) + rotX*Math.abs(rotX) + rx);
+        backLeftPower = (rotY*Math.abs(rotY) - rotX*Math.abs(rotX) + rx);
+        frontRightPower = (rotY*Math.abs(rotY)  - rotX*Math.abs(rotX) - rx);
+        backRightPower = (rotY*Math.abs(rotY)  + rotX*Math.abs(rotX) - rx);
 
         this.frontLeft.setPower(frontLeftPower);
         this.backLeft.setPower(backLeftPower);
