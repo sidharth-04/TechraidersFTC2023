@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.testing;
 
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ArmFeedforward;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -9,21 +12,27 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.checkerframework.checker.units.qual.C;
 import org.firstinspires.ftc.teamcode.components.MecanumDriveT;
+import org.firstinspires.ftc.teamcode.components.MecanumDriveA;
 import org.firstinspires.ftc.teamcode.components.Grabber;
 import org.firstinspires.ftc.teamcode.components.Catcher;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+@Config
 @TeleOp
 public class TestBed extends LinearOpMode {
     private MecanumDriveT TDrive;
+    private MecanumDriveA ADrive;
     private Grabber grabber;
     private Catcher catcher;
+
+    private static double strafePower = 1.5;
 
     @Override
     public void runOpMode() {
         // Drivetrain Variables
         TDrive = new MecanumDriveT(hardwareMap);
+        ADrive = new MecanumDriveA(hardwareMap);
         grabber = new Grabber(hardwareMap);
         catcher = new Catcher(hardwareMap);
         double x;
@@ -36,16 +45,36 @@ public class TestBed extends LinearOpMode {
 
         grabber.init();
         catcher.init();
-
         while (opModeIsActive()) {
             // ----------------------------------
             // DRIVETRAIN
             // ----------------------------------
-            x = gamepad1.left_stick_x;
-            y = -gamepad1.left_stick_y;
-            rx = gamepad1.right_stick_x;
-            TDrive.update(x, y, rx);
-
+            if (gamepad1.dpad_left) {
+                x = -strafePower;
+                y = 0;
+                rx = 0;
+                TDrive.update(x, y, rx);
+            } else if (gamepad1.dpad_right) {
+                x = strafePower;
+                y = 0;
+                rx = 0;
+                TDrive.update(x, y, rx);
+            } else if (gamepad1.dpad_down) {
+                x = 0;
+                y = -strafePower;
+                rx = 0;
+                TDrive.update(x, y, rx);
+            } else if (gamepad1.dpad_up) {
+                x = 0;
+                y = strafePower;
+                rx = 0;
+                TDrive.update(x, y, rx);
+            } else {
+                x = gamepad1.left_stick_x;
+                y = -gamepad1.left_stick_y;
+                rx = gamepad1.right_stick_x;
+                TDrive.update(x, y, rx);
+            }
             // ----------------------------------
             // GRABBER
             // ----------------------------------
@@ -97,8 +126,10 @@ public class TestBed extends LinearOpMode {
                 catcher.setEasyCatch();
             }
             if (gamepad2.b) {
-                catcher.setTeleDrop();
-
+                catcher.setRightDrop();
+            }
+            if (gamepad2.x) {
+                catcher.setLeftDrop();
             }
 
             // Code for flipping the cone

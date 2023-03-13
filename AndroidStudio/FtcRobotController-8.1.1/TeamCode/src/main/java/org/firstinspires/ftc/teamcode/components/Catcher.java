@@ -31,14 +31,14 @@ public class Catcher {
     }
 
     public void increaseRotation() {
-        rotationServoPos += 0.01;
+        rotationServoPos += 0.001;
         if (rotationServoPos >= 1) {
             rotationServoPos = 1;
         }
         rotateLiftServo.setPosition(rotationServoPos);
     }
     public void decreaseRotation() {
-        rotationServoPos -= 0.01;
+        rotationServoPos -= 0.001;
         if (rotationServoPos <= 0) {
             rotationServoPos = 0;
         }
@@ -61,11 +61,14 @@ public class Catcher {
         rotationServoPos = 0.4;
         rotateLiftServo.setPosition(rotationServoPos);
     }
-    public void setAutoDrop() {
-        rotationServoPos = 0.34;
+    public void manualCatchSet(double rotation) {
+        rotateLiftServo.setPosition(rotation);
+    }
+    public void setRightDrop() {
+        rotationServoPos = 0.2;
         rotateLiftServo.setPosition(rotationServoPos);
     }
-    public void setTeleDrop() {
+    public void setLeftDrop() {
         rotationServoPos = 0.67;
         rotateLiftServo.setPosition(rotationServoPos);
     }

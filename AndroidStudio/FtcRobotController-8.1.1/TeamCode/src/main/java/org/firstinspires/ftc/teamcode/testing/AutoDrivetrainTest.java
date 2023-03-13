@@ -90,13 +90,6 @@ public class AutoDrivetrainTest extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-//            Trajectory traj = ADrive.trajectoryBuilder(new Pose2d())
-//                    .strafeLeft(4)
-//                    .build();
-//            ADrive.followTrajectory(traj);
-//            ADrive.turn(Math.toRadians(90));
-//            Pose2d startPose = new Pose2d(-4, 0, Math.toRadians(90));
-//            ADrive.setPoseEstimate(startPose);
 
             while (opModeIsActive() && positionToPark == 0) {
                 ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
@@ -164,6 +157,7 @@ public class AutoDrivetrainTest extends LinearOpMode {
                             .build();
                     ADrive.followTrajectory(traj1);
                 }
+                ADrive.turn(Math.toRadians(180));
             }
 
             // Go to startpoint
@@ -181,10 +175,10 @@ public class AutoDrivetrainTest extends LinearOpMode {
 //            timer = null;
 //
 //            // Drive to cone
-//            traj = ADrive.trajectoryBuilder(new Pose2d())
+//            traj2 = ADrive.trajectoryBuilder(traj.end())
 //                    .forward(5)
 //                    .build();
-//            ADrive.followTrajectory(traj);
+//            ADrive.followTrajectory(traj2);
 //
 //            // Close claw
 //            grabber.closeClaw();

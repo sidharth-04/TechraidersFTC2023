@@ -96,7 +96,7 @@ public class Grabber {
         if (grabberRotator.getCurrentPosition() < upCheckPoint) {
             return;
         }
-        if (grabberLift.getCurrentPosition() > 600) {
+        if (grabberLift.getCurrentPosition() > 200) {
             return;
         }
         grabberState = 1;
