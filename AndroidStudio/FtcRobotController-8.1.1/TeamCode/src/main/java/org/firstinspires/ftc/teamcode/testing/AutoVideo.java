@@ -24,45 +24,9 @@ public class AutoVideo extends LinearOpMode {
         waitForStart();
         if (opModeIsActive()) {
             Trajectory traj = ADrive.trajectoryBuilder(new Pose2d())
-                    .lineToSplineHeading(new Pose2d(TILE_LENGTH*2,0,Math.toRadians(-90)))
+                    .lineToSplineHeading(new Pose2d(TILE_LENGTH * 2, 0, Math.toRadians(-90)))
                     .build();
             ADrive.followTrajectory(traj);
         }
-
-            // Go to startpoint
-//            traj = ADrive.trajectoryBuilder(new Pose2d())
-//                    .lineToSplineHeading(new Pose2d(TILE_LENGTH*2,0,Math.toRadians(90)))
-//                    .build();
-//            ADrive.followTrajectory(traj);
-//
-//            // First setpoint
-//            grabber.moveDown(490);
-//            timer = new ElapsedTime();
-//            while (opModeIsActive() && timer.seconds() <= 0.3) {
-//                grabber.update();
-//            }
-//            timer = null;
-//
-//            // Drive to cone
-//            traj2 = ADrive.trajectoryBuilder(traj.end())
-//                    .forward(5)
-//                    .build();
-//            ADrive.followTrajectory(traj2);
-//
-//            // Close claw
-//            grabber.closeClaw();
-//
-//            // Auto contract
-//            grabber.autoContract();
-//            timer = new ElapsedTime();
-//            while (opModeIsActive() && timer.seconds() <= 0.8) {
-//                grabber.update();
-//            }
-//
-//            // Drive back to junction
-//            traj = ADrive.trajectoryBuilder(new Pose2d())
-//                    .back(5)
-//                    .build();
-//            ADrive.followTrajectory(traj);
-        }
     }
+}

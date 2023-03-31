@@ -28,7 +28,8 @@ public class AutoDrivetrainTest extends LinearOpMode {
     private Grabber grabber;
     private Catcher catcher;
     private ElapsedTime timer = null;
-    private Trajectory traj;
+
+    private Trajectory spTraj;
 
     private static double TILE_LENGTH = 23.5;
 
@@ -89,6 +90,7 @@ public class AutoDrivetrainTest extends LinearOpMode {
 
         waitForStart();
 
+        // Get the tag from the sleeve
         if (opModeIsActive()) {
 
             while (opModeIsActive() && positionToPark == 0) {
@@ -132,70 +134,104 @@ public class AutoDrivetrainTest extends LinearOpMode {
                 }
             }
 
-            if (positionToPark > 0) {
-                if (positionToPark == 1) {
-                    Trajectory traj1 = ADrive.trajectoryBuilder(new Pose2d())
-                            .forward(TILE_LENGTH)
-                            .build();
-                    Trajectory traj2 = ADrive.trajectoryBuilder(traj1.end())
-                            .strafeLeft(TILE_LENGTH)
-                            .build();
-                    ADrive.followTrajectory(traj1);
-                    ADrive.followTrajectory(traj2);
-                } else if (positionToPark == 3) {
-                    Trajectory traj1 = ADrive.trajectoryBuilder(new Pose2d())
-                            .forward(TILE_LENGTH)
-                            .build();
-                    Trajectory traj2 = ADrive.trajectoryBuilder(traj1.end())
-                            .strafeRight(TILE_LENGTH)
-                            .build();
-                    ADrive.followTrajectory(traj1);
-                    ADrive.followTrajectory(traj2);
-                } else {
-                    Trajectory traj1 = ADrive.trajectoryBuilder(new Pose2d())
-                            .forward(TILE_LENGTH)
-                            .build();
-                    ADrive.followTrajectory(traj1);
-                }
-                ADrive.turn(Math.toRadians(180));
-            }
-
             // Go to startpoint
-//            traj = ADrive.trajectoryBuilder(new Pose2d())
-//                    .lineToSplineHeading(new Pose2d(TILE_LENGTH*2,0,Math.toRadians(90)))
-//                    .build();
-//            ADrive.followTrajectory(traj);
-//
-//            // First setpoint
-//            grabber.moveDown(490);
-//            timer = new ElapsedTime();
-//            while (opModeIsActive() && timer.seconds() <= 0.3) {
-//                grabber.update();
-//            }
-//            timer = null;
-//
-//            // Drive to cone
-//            traj2 = ADrive.trajectoryBuilder(traj.end())
-//                    .forward(5)
-//                    .build();
-//            ADrive.followTrajectory(traj2);
-//
-//            // Close claw
-//            grabber.closeClaw();
-//
-//            // Auto contract
-//            grabber.autoContract();
-//            timer = new ElapsedTime();
-//            while (opModeIsActive() && timer.seconds() <= 0.8) {
-//                grabber.update();
-//            }
-//
-//            // Drive back to junction
-//            traj = ADrive.trajectoryBuilder(new Pose2d())
-//                    .back(5)
-//                    .build();
-//            ADrive.followTrajectory(traj);
+            spTraj = ADrive.trajectoryBuilder(new Pose2d())
+                    .lineToSplineHeading(new Pose2d(TILE_LENGTH*2,0,Math.toRadians(-90)))
+                    .build();
+            ADrive.followTrajectory(spTraj);
+
+            // Repeat actions
+            doSequence(470);
+//            doSequence(500);
+//            doSequence(520);
+//            doSequence(550);
+//            doSequence(580);
+
+            // Custom sleeve parking
+            if (positionToPark == 1) {
+                Trajectory traj1 = ADrive.trajectoryBuilder(spTraj.end())
+                        .back(TILE_LENGTH)
+                        .build();
+                ADrive.followTrajectory(traj1);
+            } else if (positionToPark == 3) {
+                Trajectory traj1 = ADrive.trajectoryBuilder(spTraj.end())
+                        .forward(TILE_LENGTH)
+                        .build();
+                ADrive.followTrajectory(traj1);
+            }
+            ADrive.turn(Math.toRadians(90));
         }
+    }
+
+    public void doSequence(int coneRotation) {
+        // First setpoint
+        grabber.moveDown(coneRotation);
+        timer = new ElapsedTime();
+        while (opModeIsActive() && timer.seconds() <= 1) {
+            grabber.update();
+        }
+        timer = null;
+
+
+        // Drive to cone
+        Trajectory coneTraj = ADrive.trajectoryBuilder(spTraj.end())
+                .forward(6)
+                .build();
+        ADrive.followTrajectory(coneTraj);
+
+        // Close claw
+        grabber.closeClaw();
+
+        // Auto contract
+        catcher.resetCatcher();
+        catcher.setEasyCatch();
+        grabber.autoContract();
+        timer = new ElapsedTime();
+        while (opModeIsActive() && timer.seconds() <= 4) {
+            grabber.update();
+        }
+        grabber.openClaw();
+        timer = null;
+
+        // Drive back to junction
+        Trajectory junctionTraj = ADrive.trajectoryBuilder(coneTraj.end())
+                .back(6)
+                .build();
+        ADrive.followTrajectory(junctionTraj);
+
+        // Move the grabber down ago
+        grabber.moveDown(580);
+        timer = new ElapsedTime();
+        while (opModeIsActive() && timer.seconds() <= 1) {
+            grabber.update();
+        }
+        timer = null;
+
+        // Extend the elevator
+        catcher.setRightDrop();
+        catcher.extendLift();
+        timer = new ElapsedTime();
+        while (opModeIsActive() && timer.seconds() <= 2) {
+        }
+        catcher.stationLift();
+        timer = null;
+
+        // Drop the cone
+        catcher.dumpCone();
+        timer = new ElapsedTime();
+        while (opModeIsActive() && timer.seconds() <= 1) {
+        }
+        timer = null;
+        catcher.resetCatcher();
+
+        // Contract elevator
+        catcher.contractLift();
+        timer = new ElapsedTime();
+        while (opModeIsActive() && timer.seconds() <= 2) {
+        }
+        catcher.stationLift();
+        catcher.setEasyCatch();
+        timer = null;
     }
 
     void tagToTelemetry(AprilTagDetection detection)
